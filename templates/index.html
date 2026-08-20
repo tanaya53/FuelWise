@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FuelWise AI - Premium Smart Fuel & Route Planner</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Notification Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-droplet-slash"></i>
+                </div>
+                <div class="brand-text">
+                    <h2>FuelWise <span>AI</span></h2>
+                    <small>Smart Ride Optimizer</small>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <button class="nav-btn active" data-tab="tab-analyze">
+                    <i class="fa-solid fa-route"></i> Analyze Ride
+                </button>
+                <button class="nav-btn" data-tab="tab-garage">
+                    <i class="fa-solid fa-motorcycle"></i> My Garage
+                </button>
+                <button class="nav-btn" data-tab="tab-logs">
+                    <i class="fa-solid fa-gas-pump"></i> Refueling Log
+                </button>
+                <button class="nav-btn" data-tab="tab-history">
+                    <i class="fa-solid fa-history"></i> Trip History
+                </button>
+                <button class="nav-btn" data-tab="tab-analytics">
+                    <i class="fa-solid fa-chart-simple"></i> Analytics
+                </button>
+            </nav>
+
+            <div class="model-status-card">
+                <div class="status-indicator-wrapper">
+                    <span class="status-dot pulsing"></span>
+                    <span class="status-label">AI Engine Active</span>
+                </div>
+                <p>Random Forest Regressor trained on real-world test rides.</p>
+                <button id="btn-sync-model" class="btn-secondary btn-xs">
+                    <i class="fa-solid fa-arrows-rotate"></i> Retrain Model
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Body -->
+        <main class="main-content">
+            <!-- Header bar -->
+            <header class="app-header">
+                <div class="header-left">
+                    <h1 id="tab-title">Analyze Ride</h1>
+                    <p id="tab-desc">Input ride conditions to compute predicted mileage and range with smart maps.</p>
+                </div>
+                <div class="header-right">
+                    <button id="theme-toggle" class="theme-toggle-btn" title="Toggle Theme">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
+                    <div class="user-profile">
+                        <div class="avatar"><i class="fa-solid fa-user-astronaut"></i></div>
+                        <span>Rider Mode</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Container for Tab Views -->
+            <div class="tab-view-container">
+
+                <!-- 1. Analyze Ride Tab -->
+                <section id="tab-analyze" class="tab-content active">
+                    <div class="grid-2-col">
+                        <!-- Left pane: Input Forms -->
+                        <div class="glass-card form-section-card">
+                            <h3 class="card-title"><i class="fa-solid fa-sliders"></i> Ride Configurator</h3>
+                            <form id="analyze-form" class="ride-form">
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-map-marker-alt"></i> Route Details</label>
+                                    <div class="location-inputs">
+                                        <div class="input-with-action">
+                                            <input type="text" id="start-location" placeholder="Start Point Name / Coordinates" required>
+                                            <button type="button" id="btn-pin-start" class="btn-pin" title="Pin start point on map"><i class="fa-solid fa-map-pin"></i> Pin</button>
+                                        </div>
+                                        <div class="input-with-action">
+                                            <input type="text" id="end-location" placeholder="Destination Name / Coordinates" required>
+                                            <button type="button" id="btn-pin-end" class="btn-pin" title="Pin destination on map"><i class="fa-solid fa-map-pin"></i> Pin</button>
+                                        </div>
+                                    </div>
+                                    <div class="map-coordinates-debug">
+                                        <span id="coords-status" class="badge badge-info">Map pin helpers ready</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="bike-select"><i class="fa-solid fa-motorcycle"></i> Choose Bike</label>
+                                        <select id="bike-select" required>
+                                            <option value="">Select bike...</option>
+                                            <!-- Dynamically populated -->
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="road-select"><i class="fa-solid fa-road"></i> Road Type</label>
+                                        <select id="road-select" required>
+                                            <option value="Highway">Highway (Smooth/Fast)</option>
+                                            <option value="Rural">Rural (Rough/Slow)</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="load-select"><i class="fa-solid fa-user-group"></i> Load Profile</label>
+                                        <select id="load-select" required>
+                                            <option value="Rider Only">Rider Only (Standard)</option>
+                                            <option value="Rider + Pillion/Luggage">Rider + Pillion/Luggage (Heavy)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="fallback-distance"><i class="fa-solid fa-route"></i> Fallback Dist. (km)</label>
+                                        <input type="number" id="fallback-distance" value="15" min="1" step="0.5" title="Used if routing engine is blocked or offline">
+                                    </div>
+                                </div>
+
+                                <div class="form-group slider-group">
+                                    <div class="slider-header">
+                                        <label for="fuel-input"><i class="fa-solid fa-gas-pump"></i> Fuel Amount: <span id="fuel-val">2.5</span> Litres</label>
+                                    </div>
+                                    <input type="range" id="fuel-input" min="0.1" max="25" step="0.1" value="2.5" class="range-slider">
+                                </div>
+
+                                <div class="form-group slider-group">
+                                    <div class="slider-header">
+                                        <label for="speed-input"><i class="fa-solid fa-gauge-high"></i> Average Speed: <span id="speed-val">50</span> km/h</label>
+                                    </div>
+                                    <input type="range" id="speed-input" min="10" max="150" step="5" value="50" class="range-slider">
+                                </div>
+
+                                <button type="submit" id="btn-submit-analyze" class="btn-primary btn-block">
+                                    <span class="normal-text"><i class="fa-solid fa-brain"></i> Compute Smart Range</span>
+                                    <span class="loading-text"><i class="fa-solid fa-circle-notch fa-spin"></i> Running Random Forest AI...</span>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Right pane: Map & Results -->
+                        <div class="map-results-column">
+                            <!-- Map Card -->
+                            <div class="glass-card map-card">
+                                <div class="map-header">
+                                    <h3><i class="fa-solid fa-map-location-dot"></i> Interactive Route Map</h3>
+                                    <span class="instruction-badge">Click map to drop Start/End pins</span>
+                                </div>
+                                <div id="route-map" class="map-container"></div>
+                            </div>
+
+                            <!-- Predictions Display (Initially hidden or showing placeholder) -->
+                            <div id="analysis-results-card" class="glass-card results-card hidden">
+                                <h3 class="card-title"><i class="fa-solid fa-chart-pie"></i> AI Analytics Report</h3>
+                                
+                                <div class="results-grid">
+                                    <div class="result-tile">
+                                        <div class="tile-icon"><i class="fa-solid fa-bolt-lightning"></i></div>
+                                        <div class="tile-content">
+                                            <span class="tile-label">AI Est. Mileage</span>
+                                            <h4 id="res-mileage">- km/L</h4>
+                                        </div>
+                                    </div>
+
+                                    <div class="result-tile">
+                                        <div class="tile-icon"><i class="fa-solid fa-arrows-left-right"></i></div>
+                                        <div class="tile-content">
+                                            <span class="tile-label">Predicted Range</span>
+                                            <h4 id="res-range">- km</h4>
+                                        </div>
+                                    </div>
+
+                                    <div class="result-tile">
+                                        <div class="tile-icon"><i class="fa-solid fa-road"></i></div>
+                                        <div class="tile-content">
+                                            <span class="tile-label">Actual Distance</span>
+                                            <h4 id="res-distance">- km</h4>
+                                        </div>
+                                    </div>
+
+                                    <div class="result-tile">
+                                        <div class="tile-icon"><i class="fa-solid fa-clock"></i></div>
+                                        <div class="tile-content">
+                                            <span class="tile-label">Est. Time</span>
+                                            <h4 id="res-time">- hrs</h4>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="fuel-status-bar-container">
+                                    <div class="status-header">
+                                        <span id="res-status-label" class="status-badge">Sufficient Fuel</span>
+                                        <span id="res-fuel-needed">Fuel Needed: - L</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div id="fuel-progress-fill" class="progress-fill green" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="recommendations-box">
+                                    <p id="res-recommendation">AI is processing your parameters...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. My Garage Tab -->
+                <section id="tab-garage" class="tab-content">
+                    <div class="grid-2-col">
+                        <!-- Left Pane: Add Bike -->
+                        <div class="glass-card">
+                            <h3 class="card-title"><i class="fa-solid fa-plus-circle"></i> Add Custom Motorcycle</h3>
+                            <form id="add-bike-form" class="regular-form">
+                                <div class="form-group">
+                                    <label for="new-bike-name"><i class="fa-solid fa-tag"></i> Bike Brand & Model Name</label>
+                                    <input type="text" id="new-bike-name" placeholder="e.g., Yamaha FZ-S, Royal Enfield 350" required>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="new-bike-mileage"><i class="fa-solid fa-road"></i> Base Mileage (km/L)</label>
+                                        <input type="number" id="new-bike-mileage" placeholder="e.g., 45" min="5" max="120" step="0.5" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="new-bike-tank"><i class="fa-solid fa-gas-pump"></i> Tank Capacity (Litres)</label>
+                                        <input type="number" id="new-bike-tank" placeholder="e.g., 12.5" min="2" max="50" step="0.1" required>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn-primary"><i class="fa-solid fa-motorcycle"></i> Save Bike to Garage</button>
+                            </form>
+                        </div>
+
+                        <!-- Right Pane: List Bikes -->
+                        <div class="glass-card">
+                            <h3 class="card-title"><i class="fa-solid fa-warehouse"></i> My Vehicles</h3>
+                            <div class="vehicles-list-wrapper">
+                                <table class="custom-table" id="bikes-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Model</th>
+                                            <th>Base Mileage</th>
+                                            <th>Tank Capacity</th>
+                                            <th class="actions-col">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Dynamically generated rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. Refueling Log Tab -->
+                <section id="tab-logs" class="tab-content">
+                    <div class="grid-2-col">
+                        <!-- Left Pane: Log Refuel -->
+                        <div class="glass-card">
+                            <h3 class="card-title"><i class="fa-solid fa-pen-to-square"></i> Log New Purchase</h3>
+                            <form id="refuel-form" class="regular-form">
+                                <div class="form-group">
+                                    <label for="refuel-date"><i class="fa-solid fa-calendar-days"></i> Purchase Date</label>
+                                    <input type="date" id="refuel-date" required>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="refuel-liters"><i class="fa-solid fa-droplet"></i> Fuel Quantity (L)</label>
+                                        <input type="number" id="refuel-liters" placeholder="e.g. 5.5" min="0.1" step="0.01" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="refuel-price"><i class="fa-solid fa-indian-rupee-sign"></i> Price per Litre</label>
+                                        <input type="number" id="refuel-price" placeholder="e.g. 104.50" min="1" step="0.01" required>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="refuel-odometer"><i class="fa-solid fa-gauge"></i> Odometer Reading (km)</label>
+                                        <input type="number" id="refuel-odometer" placeholder="e.g. 24850" min="0" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="refuel-notes"><i class="fa-solid fa-sticky-note"></i> Notes</label>
+                                        <input type="text" id="refuel-notes" placeholder="e.g. Petrol pump highway-3">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn-primary"><i class="fa-solid fa-receipt"></i> Save Receipt</button>
+                            </form>
+                        </div>
+
+                        <!-- Right Pane: Log List -->
+                        <div class="glass-card">
+                            <h3 class="card-title"><i class="fa-solid fa-file-invoice"></i> Expense History</h3>
+                            <div class="refuels-list-wrapper">
+                                <table class="custom-table" id="refuels-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Liters</th>
+                                            <th>Total Cost</th>
+                                            <th>Odometer</th>
+                                            <th class="actions-col">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Dynamically generated rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. Trip History Tab -->
+                <section id="tab-history" class="tab-content">
+                    <div class="glass-card">
+                        <div class="card-header-with-action">
+                            <h3 class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> Run Records</h3>
+                            <button id="btn-report-ride-modal" class="btn-secondary btn-sm"><i class="fa-solid fa-plus"></i> Submit Real Ride Data</button>
+                        </div>
+                        <div class="table-container history-table-wrapper">
+                            <table class="custom-table" id="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Route</th>
+                                        <th>Bike</th>
+                                        <th>Speed</th>
+                                        <th>Road</th>
+                                        <th>Fuel Needed</th>
+                                        <th>Est. Range</th>
+                                        <th>Status</th>
+                                        <th class="actions-col">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamically generated rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. Analytics Tab -->
+                <section id="tab-analytics" class="tab-content">
+                    <div class="grid-2-col">
+                        <!-- Chart 1: Expenses -->
+                        <div class="glass-card chart-card">
+                            <h3 class="card-title"><i class="fa-solid fa-money-bill-trend-up"></i> Refueling Expenditures</h3>
+                            <div class="chart-container">
+                                <canvas id="chart-expenses"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Chart 2: Bike Mileages -->
+                        <div class="glass-card chart-card">
+                            <h3 class="card-title"><i class="fa-solid fa-chart-bar"></i> Average Bike Mileage (km/L)</h3>
+                            <div class="chart-container">
+                                <canvas id="chart-mileages"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart 3: Speed vs Mileage Scatter -->
+                        <div class="glass-card chart-card span-2-cols">
+                            <h3 class="card-title"><i class="fa-solid fa-circle-nodes"></i> Dataset Dispersion: Speed vs Mileage</h3>
+                            <div class="chart-container scatter-chart-container">
+                                <canvas id="chart-dispersion"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Submit Real Ride Data / Retraining Modal -->
+    <div id="ride-modal" class="modal-overlay hidden">
+        <div class="glass-card modal-container">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-brain"></i> Log Actual Ride Performance</h3>
+                <button class="close-modal-btn" id="btn-close-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="retrain-form" class="regular-form">
+                <p class="modal-subtitle">Feed actual trip outcomes back into the AI to improve future estimations.</p>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="modal-bike"><i class="fa-solid fa-motorcycle"></i> Vehicle</label>
+                        <select id="modal-bike" required>
+                            <!-- Options will mirror general selector -->
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal-road"><i class="fa-solid fa-road"></i> Road Type</label>
+                        <select id="modal-road" required>
+                            <option value="Highway">Highway</option>
+                            <option value="Rural">Rural</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="modal-load"><i class="fa-solid fa-user-group"></i> Load</label>
+                        <select id="modal-load" required>
+                            <option value="1">Rider Only</option>
+                            <option value="2">Rider + Pillion/Luggage</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal-speed"><i class="fa-solid fa-gauge-high"></i> Average Speed (km/h)</label>
+                        <input type="number" id="modal-speed" placeholder="e.g. 55" min="10" max="150" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="modal-fuel"><i class="fa-solid fa-droplet"></i> Initial Fuel (L)</label>
+                        <input type="number" id="modal-fuel" placeholder="e.g. 2.0" min="0.1" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="modal-distance"><i class="fa-solid fa-route"></i> Trip Distance (km)</label>
+                        <input type="number" id="modal-distance" placeholder="e.g. 90" min="1" step="0.1" required>
+                    </div>
+                </div>
+
+                <div class="form-group highlight-input">
+                    <label for="modal-mileage"><i class="fa-solid fa-star"></i> ACTUAL Mileage Achieved (km/L)</label>
+                    <input type="number" id="modal-mileage" placeholder="e.g. 47.5" min="5" max="120" step="0.1" required>
+                </div>
+
+                <button type="submit" class="btn-primary btn-block">
+                    <span class="normal-text"><i class="fa-solid fa-arrows-spin"></i> Inject & Retrain AI Engine</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom JS module -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

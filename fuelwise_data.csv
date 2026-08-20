@@ -1,0 +1,17 @@
+Bike,Speed,Fuel,Distance,Road,Load,Mileage
+Hero Splendor,40,2.0,30,Rural,1,62
+Hero Splendor,50,2.0,35,Highway,1,60
+Hero Splendor,60,2.5,50,Rural,2,55
+Hero Splendor,70,2.5,60,Highway,1,52
+Honda Shine,40,2.0,35,Rural,1,58
+Honda Shine,50,2.5,45,Highway,1,55
+Honda Shine,60,2.5,50,Rural,2,51
+Honda Shine,70,3.0,65,Highway,2,47
+Bajaj Pulsar 150,40,2.0,35,Rural,1,48
+Bajaj Pulsar 150,50,2.5,50,Highway,1,45
+Bajaj Pulsar 150,60,2.5,55,Rural,2,41
+Bajaj Pulsar 150,70,3.0,65,Highway,2,38
+TVS Apache,40,2.0,30,Rural,1,43
+TVS Apache,50,2.5,45,Highway,1,40
+TVS Apache,60,3.0,55,Rural,2,36
+TVS Apache,70,3.0,60,Highway,2,33
