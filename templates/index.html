@@ -17,6 +17,13 @@
 </head>
 <body>
 
+    <!-- Mobile Sidebar Controls -->
+    <button type="button" class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open navigation menu">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <div class="mobile-sidebar-overlay" id="mobile-sidebar-overlay"></div>
+
     <!-- Notification Toast Container -->
     <div id="toast-container" class="toast-container"></div>
 
@@ -369,7 +376,7 @@
                         <div id="convoy-safety-alert" class="convoy-alert-banner hidden">
                             <div class="alert-content">
                                 <i class="fa-solid fa-triangle-exclamation"></i>
-                                <span id="convoy-alert-text">⚠️ Low Fuel Alert: Rider C (0.85L left) needs a refuel soon! Nearest station recommended.</span>
+                                <span id="convoy-alert-text">Ã¢Å¡Â Ã¯Â¸Â Low Fuel Alert: Rider C (0.85L left) needs a refuel soon! Nearest station recommended.</span>
                             </div>
                             <button type="button" id="btn-convoy-find-station" class="btn-warning btn-xs">
                                 <i class="fa-solid fa-gas-pump"></i> Route Convoy to Nearest Pump
@@ -793,5 +800,62 @@
     <script src="{{ url_for('static', filename='vendor/chart.js') }}" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/chart.js';"></script>
     <!-- Custom JS module -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- Mobile Sidebar Behavior -->
+    <script>
+        (function () {
+            const menuButton = document.getElementById("mobile-menu-btn");
+            const sidebar = document.querySelector(".sidebar");
+            const overlay = document.getElementById("mobile-sidebar-overlay");
+
+            if (!menuButton || !sidebar || !overlay) return;
+
+            function openMobileSidebar() {
+                sidebar.classList.add("mobile-open");
+                overlay.classList.add("active");
+                menuButton.setAttribute("aria-label", "Close navigation menu");
+
+                const icon = menuButton.querySelector("i");
+                if (icon) {
+                    icon.classList.remove("fa-bars");
+                    icon.classList.add("fa-xmark");
+                }
+            }
+
+            function closeMobileSidebar() {
+                sidebar.classList.remove("mobile-open");
+                overlay.classList.remove("active");
+                menuButton.setAttribute("aria-label", "Open navigation menu");
+
+                const icon = menuButton.querySelector("i");
+                if (icon) {
+                    icon.classList.remove("fa-xmark");
+                    icon.classList.add("fa-bars");
+                }
+            }
+
+            menuButton.addEventListener("click", function () {
+                if (sidebar.classList.contains("mobile-open")) {
+                    closeMobileSidebar();
+                } else {
+                    openMobileSidebar();
+                }
+            });
+
+            overlay.addEventListener("click", closeMobileSidebar);
+
+            sidebar.querySelectorAll(".nav-btn").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    closeMobileSidebar();
+                });
+            });
+
+            window.addEventListener("resize", function () {
+                if (window.innerWidth > 768) {
+                    closeMobileSidebar();
+                }
+            });
+        })();
+    </script>
+
 </body>
 </html>

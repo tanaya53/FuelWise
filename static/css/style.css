@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    FUELWISE CSS: PREMIUM DARK & LIGHT GLASSMORPHISM SYSTEM
    ========================================================================== */
 
@@ -2069,3 +2069,503 @@ select option {
         grid-template-columns: 1fr;
     }
 }
+
+
+/* =========================================================
+   FuelWise - Mobile Layout Fix
+   Keeps desktop layout unchanged
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    /* Prevent the entire page from creating horizontal overflow */
+    html,
+    body {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    /* Main page/container */
+    .container,
+    .main-container,
+    .content,
+    main {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Header / navigation */
+    header,
+    .header,
+    .navbar,
+    .nav,
+    .topbar {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Generic grids become single-column */
+    .dashboard-grid,
+    .stats-grid,
+    .cards-grid,
+    .feature-grid,
+    .group-layout-grid,
+    .main-grid,
+    .content-grid {
+        grid-template-columns: 1fr !important;
+        width: 100%;
+    }
+
+    /* Cards must stay inside the screen */
+    .card,
+    .stat-card,
+    .feature-card,
+    .panel,
+    .section-card {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    /* Forms */
+    input,
+    select,
+    textarea,
+    button {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Rows containing controls stack on mobile */
+    .form-row,
+    .input-row,
+    .controls-row,
+    .action-row,
+    .button-row {
+        grid-template-columns: 1fr !important;
+        flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    /* Buttons */
+    .form-row button,
+    .input-row button,
+    .controls-row button,
+    .action-row button,
+    .button-row button {
+        width: 100%;
+    }
+
+    /* Maps */
+    .map-container,
+    #route-map,
+    .convoy-map-container {
+        width: 100% !important;
+        max-width: 100%;
+        height: 360px !important;
+        min-width: 0;
+        box-sizing: border-box;
+    }
+
+    /* Leaflet itself must stay within its parent */
+    .leaflet-container {
+        width: 100% !important;
+        max-width: 100%;
+    }
+
+    /* Group Ride telemetry */
+    .rider-telemetry-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .deck-controls-row {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Rider cards */
+    .rider-card {
+        min-width: 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .rider-footer-row {
+        gap: 8px;
+    }
+
+    .rider-loc-text {
+        max-width: calc(100% - 80px);
+    }
+
+    /* Tables should scroll instead of overlapping */
+    .table-container,
+    .table-wrapper,
+    .data-table-wrapper {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    table {
+        min-width: 600px;
+    }
+
+    /* Charts */
+    canvas {
+        max-width: 100% !important;
+    }
+
+    /* Modal windows */
+    .modal,
+    .modal-content,
+    .dialog {
+        max-width: calc(100vw - 24px) !important;
+        width: calc(100vw - 24px) !important;
+        box-sizing: border-box;
+    }
+
+    /* Tab navigation */
+    .tabs-subnav {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .subnav-btn {
+        flex: 0 0 auto;
+        white-space: nowrap;
+    }
+
+    /* Text should wrap instead of pushing layout */
+    h1,
+    h2,
+    h3,
+    h4,
+    p,
+    .card-title,
+    .section-title {
+        overflow-wrap: anywhere;
+    }
+}
+
+/* Extra-small phones */
+@media (max-width: 480px) {
+
+    body {
+        font-size: 14px;
+    }
+
+    .map-container,
+    #route-map,
+    .convoy-map-container {
+        height: 300px !important;
+    }
+
+    .rider-footer-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .rider-loc-text {
+        max-width: 100%;
+    }
+
+    .tabs-subnav {
+        gap: 4px;
+    }
+
+    .subnav-btn {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+    }
+}
+
+/* =========================================================
+   FuelWise - TRUE MOBILE LAYOUT
+   Desktop layout remains unchanged
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    html,
+    body {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden !important;
+    }
+
+    /* Make the application itself full width */
+    .app-layout {
+        display: block !important;
+        width: 100% !important;
+        min-height: 100vh;
+        overflow-x: hidden;
+    }
+
+    /* -----------------------------------------------------
+       MOBILE SIDEBAR
+       Sidebar becomes a drawer instead of taking page width
+       ----------------------------------------------------- */
+    .sidebar {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        bottom: 0;
+
+        width: 280px !important;
+        max-width: 85vw;
+
+        height: 100vh;
+        box-sizing: border-box;
+
+        z-index: 1000;
+
+        overflow-y: auto;
+        overflow-x: hidden;
+
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+
+        padding: 24px 18px;
+    }
+
+    /* Class used when the mobile menu is opened */
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+
+    /* -----------------------------------------------------
+       MAIN CONTENT
+       Main content now gets the COMPLETE mobile width
+       ----------------------------------------------------- */
+    .main-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+
+        box-sizing: border-box;
+
+        margin: 0 !important;
+        padding: 20px 16px !important;
+
+        overflow-x: hidden !important;
+        overflow-y: visible;
+
+        max-height: none;
+    }
+
+    /* Header must fit inside mobile screen */
+    .app-header {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+
+        box-sizing: border-box;
+
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .header-left {
+        min-width: 0;
+        flex: 1;
+    }
+
+    #tab-title {
+        font-size: 23px;
+        line-height: 1.2;
+    }
+
+    #tab-desc {
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    .header-right {
+        flex-shrink: 0;
+    }
+
+    .profile-meta-text {
+        display: none;
+    }
+
+    /* -----------------------------------------------------
+       MOBILE MENU BUTTON
+       ----------------------------------------------------- */
+    .mobile-menu-btn {
+        display: flex !important;
+
+        position: fixed;
+        top: 14px;
+        left: 14px;
+
+        width: 44px;
+        height: 44px;
+
+        align-items: center;
+        justify-content: center;
+
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+
+        background: var(--bg-secondary);
+        color: var(--text-primary);
+
+        cursor: pointer;
+
+        z-index: 1100;
+
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    }
+
+    /* Give header some room for hamburger */
+    .app-header {
+        padding-left: 54px;
+    }
+
+    /* -----------------------------------------------------
+       SIDEBAR OVERLAY
+       ----------------------------------------------------- */
+    .mobile-sidebar-overlay {
+        display: block !important;
+
+        position: fixed;
+        inset: 0;
+
+        background: rgba(0, 0, 0, 0.45);
+
+        z-index: 900;
+
+        opacity: 0;
+        pointer-events: none;
+
+        transition: opacity 0.3s ease;
+    }
+
+    .mobile-sidebar-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    /* -----------------------------------------------------
+       GENERAL MOBILE WIDTH PROTECTION
+       ----------------------------------------------------- */
+    .tab-view-container,
+    .tab-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+
+    .grid-2-col {
+        grid-template-columns: 1fr !important;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr !important;
+    }
+
+    .quick-convoy-callout {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+    }
+
+    .quick-convoy-callout button {
+        width: 100%;
+    }
+
+    /* Maps */
+    .map-container,
+    #route-map,
+    .convoy-map-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box;
+    }
+
+    /* Prevent cards from forcing horizontal scrolling */
+    .glass-card,
+    .card,
+    .panel {
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box;
+    }
+
+    /* Inputs */
+    input,
+    select,
+    textarea {
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    /* Tables can scroll inside themselves */
+    .table-container,
+    .table-wrapper,
+    .data-table-wrapper {
+        max-width: 100%;
+        overflow-x: auto;
+    }
+
+    /* Hide desktop-only overflow */
+    canvas {
+        max-width: 100% !important;
+    }
+}
+
+
+/* ---------------------------------------------------------
+   SMALL PHONES
+   --------------------------------------------------------- */
+
+@media (max-width: 480px) {
+
+    .main-content {
+        padding: 16px 12px !important;
+    }
+
+    .app-header {
+        padding-left: 52px;
+    }
+
+    #tab-title {
+        font-size: 21px;
+    }
+
+    #tab-desc {
+        font-size: 12px;
+    }
+
+    .mobile-menu-btn {
+        top: 10px;
+        left: 10px;
+        width: 42px;
+        height: 42px;
+    }
+
+    .sidebar {
+        width: 270px !important;
+        max-width: 85vw;
+    }
+}
+
+
+/* ---------------------------------------------------------
+   DESKTOP - HIDE MOBILE CONTROLS
+   --------------------------------------------------------- */
+
+.mobile-menu-btn,
+.mobile-sidebar-overlay {
+    display: none;
+}
+

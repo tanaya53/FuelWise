@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // =========================================================================
     // 1. STATE & CONSTANTS
     // =========================================================================
-    let currentTheme = localStorage.getItem("fuelwise_theme") || "dark";
+    let currentTheme = localStorage.getItem("fuelwise_theme") || "light";
     let map = null;
     let tileLayer = null;
     let startMarker = null;
