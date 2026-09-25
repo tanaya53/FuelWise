@@ -858,6 +858,312 @@ select option {
     border-radius: 0 10px 10px 0;
 }
 
+.optimizer-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    margin: 4px 0 18px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.optimizer-toggle input {
+    accent-color: var(--success);
+}
+
+.optimizer-toggle i {
+    color: var(--success);
+}
+
+/* --------------------------------------------------------------------------
+   9B. EMERGENCY FUEL & REACHABLE STATIONS GUIDANCE
+   -------------------------------------------------------------------------- */
+.station-guidance-card {
+    margin-top: 18px;
+    background: linear-gradient(145deg, rgba(239, 68, 68, 0.08), rgba(245, 158, 11, 0.05), var(--bg-card));
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: 16px;
+    padding: 20px;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.guidance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.guidance-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #f59e0b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.best-station-hero {
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+}
+
+.best-station-hero::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: #f59e0b;
+}
+
+.station-hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.station-hero-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.station-brand-badge {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.guidance-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+@media (max-width: 600px) {
+    .guidance-metrics-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.guidance-metric-item {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 10px 12px;
+}
+
+.guidance-metric-item.highlight-eco {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.35);
+}
+
+.guidance-metric-item.highlight-fuel {
+    background: rgba(0, 240, 255, 0.1);
+    border-color: rgba(0, 240, 255, 0.3);
+}
+
+.g-metric-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.g-metric-val {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-top: 2px;
+}
+
+.g-metric-val.eco {
+    color: #10b981;
+}
+
+.g-metric-val.cyan {
+    color: #00f0ff;
+}
+
+.route-segments-box {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-top: 12px;
+}
+
+.route-segments-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.segment-leg {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.segment-leg.leg-1 {
+    background: rgba(245, 158, 11, 0.12);
+    border-left: 3px solid #f59e0b;
+}
+
+.segment-leg.leg-2 {
+    background: rgba(168, 85, 247, 0.12);
+    border-left: 3px solid #a855f7;
+}
+
+.segment-leg-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.segment-leg-meta {
+    color: var(--text-secondary);
+    font-size: 11px;
+}
+
+.other-stations-wrapper {
+    margin-top: 14px;
+}
+
+.other-stations-wrapper h5 {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.stations-chips-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+}
+
+.station-chip-btn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text-primary);
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.station-chip-btn:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-1px);
+    background: rgba(0, 240, 255, 0.1);
+}
+
+.station-chip-btn.active {
+    border-color: #f59e0b;
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.route-legend-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 1px solid var(--border-color);
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.legend-line {
+    width: 18px;
+    height: 4px;
+    border-radius: 2px;
+}
+
+.legend-line.direct {
+    background: #00f0ff;
+}
+
+.legend-line.leg1 {
+    background: #f59e0b;
+}
+
+.legend-line.leg2 {
+    background: #a855f7;
+    border-top: 1px dashed #fff;
+}
+
+/* Marker pulse animations */
+.marker-best-station div {
+    animation: pumpPulse 1.8s infinite;
+}
+
+@keyframes pumpPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+        transform: scale(1);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(245, 158, 11, 0);
+        transform: scale(1.08);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+        transform: scale(1);
+    }
+}
+
+
 /* --------------------------------------------------------------------------
    10. TABLES
    -------------------------------------------------------------------------- */
@@ -998,6 +1304,10 @@ select option {
 .modal-overlay.hidden {
     opacity: 0;
     pointer-events: none;
+}
+
+.hidden:not(.modal-overlay) {
+    display: none !important;
 }
 
 .modal-container {
@@ -1158,5 +1468,604 @@ select option {
     }
     50% {
         opacity: 0.5;
+    }
+}
+
+/* ==========================================================================
+   14. PHONE LOGIN & AUTHENTICATION STYLES
+   ========================================================================== */
+.interactive-profile {
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 30px;
+}
+.interactive-profile:hover {
+    transform: translateY(-1px);
+    border-color: var(--primary-color);
+    background: rgba(0, 240, 255, 0.08);
+}
+.profile-meta-text {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    line-height: 1.2;
+}
+.profile-meta-text span {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.profile-meta-text small {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.auth-modal-box {
+    max-width: 480px;
+}
+.auth-intro {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+.phone-input-group {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+.phone-prefix {
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.06);
+    font-weight: 600;
+    color: var(--primary-color);
+    border-right: 1px solid var(--border-color);
+}
+.phone-input-group input {
+    border: none;
+    background: transparent;
+    padding: 10px 14px;
+    color: var(--text-primary);
+    font-size: 1rem;
+    letter-spacing: 1px;
+    width: 100%;
+}
+.phone-input-group input:focus {
+    outline: none;
+}
+.auth-divider {
+    text-align: center;
+    margin: 16px 0;
+    position: relative;
+}
+.auth-divider::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--border-color);
+}
+.auth-divider span {
+    background: var(--bg-card);
+    position: relative;
+    padding: 0 10px;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+.otp-notice-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: rgba(0, 240, 255, 0.08);
+    border: 1px solid rgba(0, 240, 255, 0.2);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+}
+.demo-otp-badge {
+    background: #00f0ff;
+    color: #0b0f19;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+.logged-card {
+    text-align: center;
+    padding: 24px 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+.avatar-lg {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    color: #fff;
+    margin: 0 auto 12px;
+    box-shadow: 0 0 18px var(--primary-glow);
+}
+
+/* ==========================================================================
+   15. AUTOMATIC GPS GEOLOCATION STYLES
+   ========================================================================== */
+.btn-gps {
+    background: rgba(16, 185, 129, 0.15) !important;
+    border-color: rgba(16, 185, 129, 0.4) !important;
+    color: #10b981 !important;
+}
+.btn-gps:hover {
+    background: rgba(16, 185, 129, 0.3) !important;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+.gps-pulse-ring {
+    position: relative;
+    width: 22px;
+    height: 22px;
+    background: #00f0ff;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 0 12px #00f0ff;
+}
+.gps-pulse-ring::after {
+    content: "";
+    position: absolute;
+    top: -8px;
+    left: -8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid #00f0ff;
+    animation: gpsPulse 1.8s infinite ease-out;
+}
+@keyframes gpsPulse {
+    0% {
+        transform: scale(0.6);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(2.2);
+        opacity: 0;
+    }
+}
+
+/* ==========================================================================
+   16. GROUP RIDE (5 RIDERS CONVOY) STYLES
+   ========================================================================== */
+.badge-pulse-tag {
+    background: #ef4444;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 6px;
+    animation: flash 1.5s infinite;
+}
+
+.quick-convoy-callout {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(90deg, rgba(0, 240, 255, 0.12), rgba(168, 85, 247, 0.12));
+    border: 1px solid rgba(0, 240, 255, 0.25);
+    border-radius: 12px;
+    padding: 12px 20px;
+    margin-bottom: 20px;
+    gap: 16px;
+}
+.quick-convoy-callout .callout-badge {
+    background: #00f0ff;
+    color: #0b0f19;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 4px;
+}
+.quick-convoy-callout p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.convoy-control-card {
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+.convoy-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.convoy-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.ride-code-badge {
+    background: rgba(0, 240, 255, 0.1);
+    border: 1px solid rgba(0, 240, 255, 0.3);
+    padding: 6px 14px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.ride-code-badge .code-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+.ride-code-badge strong {
+    font-size: 1.05rem;
+    color: var(--primary-color);
+    letter-spacing: 1px;
+}
+.convoy-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.convoy-alert-banner {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 18px;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+    color: #fef08a;
+    gap: 12px;
+    animation: flash 2s infinite;
+}
+.convoy-alert-banner .alert-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 500;
+}
+.convoy-alert-banner.hidden {
+    display: none;
+}
+
+/* Convoy Layout Grid */
+.group-layout-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.convoy-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+/* Individual Rider Card */
+.rider-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    backdrop-filter: var(--glass-blur);
+    position: relative;
+    overflow: hidden;
+}
+.rider-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--primary-color);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.rider-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+}
+.rider-card.theme-rider-a::before { background: #00f0ff; }
+.rider-card.theme-rider-b::before { background: #10b981; }
+.rider-card.theme-rider-c::before { background: #f59e0b; }
+.rider-card.theme-rider-d::before { background: #a855f7; }
+.rider-card.theme-rider-e::before { background: #ec4899; }
+
+.rider-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.rider-info-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.rider-label-tag {
+    font-weight: 800;
+    font-size: 0.85rem;
+    padding: 4px 10px;
+    border-radius: 6px;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.theme-rider-a .rider-label-tag { background: linear-gradient(135deg, #00f0ff, #0284c7); color: #0b0f19; }
+.theme-rider-b .rider-label-tag { background: linear-gradient(135deg, #10b981, #059669); }
+.theme-rider-c .rider-label-tag { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.theme-rider-d .rider-label-tag { background: linear-gradient(135deg, #a855f7, #7e22ce); }
+.theme-rider-e .rider-label-tag { background: linear-gradient(135deg, #ec4899, #be185d); }
+
+.rider-name-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.rider-bike-name {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+/* Status Badges */
+.rider-status-pill {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.status-cruising {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+.status-low-fuel {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid #ef4444;
+    animation: flash 1.2s infinite;
+}
+.status-refueling {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border: 1px solid #f59e0b;
+}
+.status-stopped {
+    background: rgba(148, 163, 184, 0.2);
+    color: #94a3b8;
+    border: 1px solid #94a3b8;
+}
+
+/* 4-Item Telemetry Grid */
+.rider-telemetry-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    background: rgba(0, 0, 0, 0.18);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+}
+.telemetry-cell {
+    display: flex;
+    flex-direction: column;
+}
+.telemetry-cell .t-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.telemetry-cell .t-val {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+.telemetry-cell .t-val.highlight {
+    color: var(--primary-color);
+}
+.telemetry-cell .t-val.danger {
+    color: #ef4444;
+}
+
+/* Visual Fuel Tank Meter */
+.fuel-tank-meter-wrapper {
+    margin-bottom: 12px;
+}
+.meter-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+.tank-bar-bg {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    overflow: hidden;
+}
+.tank-fill-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+.tank-fill-normal { background: linear-gradient(90deg, #00f0ff, #10b981); }
+.tank-fill-warning { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+
+.rider-footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+.rider-loc-text {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+}
+.btn-focus-rider {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    transition: all 0.2s ease;
+}
+.btn-focus-rider:hover {
+    background: var(--primary-color);
+    color: #0b0f19;
+    border-color: var(--primary-color);
+}
+
+/* Active Rider Telemetry Broadcast Deck */
+.rider-control-deck {
+    border-color: rgba(0, 240, 255, 0.3);
+    background: rgba(0, 240, 255, 0.03);
+}
+.deck-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+}
+.deck-controls-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+/* Convoy Map Container & Legend */
+.convoy-map-container {
+    height: 480px;
+    width: 100%;
+    border-radius: 12px;
+}
+.convoy-map-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 10px 14px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    margin-top: 10px;
+    font-size: 0.78rem;
+}
+.legend-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 4px;
+}
+.dot-rider-a { background: #00f0ff; box-shadow: 0 0 6px #00f0ff; }
+.dot-rider-b { background: #10b981; box-shadow: 0 0 6px #10b981; }
+.dot-rider-c { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
+.dot-rider-d { background: #a855f7; box-shadow: 0 0 6px #a855f7; }
+.dot-rider-e { background: #ec4899; box-shadow: 0 0 6px #ec4899; }
+
+/* Custom Leaflet Rider Pin */
+.rider-map-pin {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: 11px;
+    border: 2px solid #fff;
+    box-shadow: 0 0 14px rgba(0, 0, 0, 0.6);
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.rider-map-pin:hover {
+    transform: scale(1.15);
+}
+.pin-label-letter {
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+}
+.pin-icon-sub {
+    font-size: 9px;
+    opacity: 0.9;
+}
+
+/* Custom Ride Modal Tabs */
+.tabs-subnav {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+}
+.subnav-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.subnav-btn.active {
+    background: rgba(0, 240, 255, 0.15);
+    color: var(--primary-color);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 900px) {
+    .group-layout-grid {
+        grid-template-columns: 1fr;
+    }
+    .rider-telemetry-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .deck-controls-row {
+        grid-template-columns: 1fr;
     }
 }

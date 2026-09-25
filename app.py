@@ -27,12 +27,24 @@ def get_bike_base_mileage(bike_name):
     # Try mapping
     if bike_name in DEFAULT_BIKE_MILEAGE:
         return DEFAULT_BIKE_MILEAGE[bike_name]
-    # Try database lookup
+
+    # Try PostgreSQL database lookup
     conn = database.get_db_connection()
-    row = conn.execute("SELECT base_mileage FROM bikes WHERE name = ?", (bike_name,)).fetchone()
-    conn.close()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            "SELECT base_mileage FROM bikes WHERE name = %s",
+            (bike_name,)
+        )
+        row = cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
+
     if row:
         return row["base_mileage"]
+
     return 50.0  # Fallback
 
 def train_model():
@@ -369,6 +381,605 @@ def get_stats():
         })
     except Exception as e:
         return jsonify({"success": False, "message": f"Error loading stats: {str(e)}"}), 500
+
+
+
+
+# ============================================================================
+# PHONE / OTP AUTHENTICATION
+# ============================================================================
+
+DEMO_OTP = "7788"
+
+
+@app.route("/api/auth/send-otp", methods=["POST"])
+def send_otp():
+    try:
+        data = request.get_json() or {}
+        phone = str(data.get("phone", "")).strip()
+
+        # Basic phone validation
+        if not phone.isdigit() or len(phone) != 10:
+            return jsonify({
+                "success": False,
+                "message": "Please enter a valid 10-digit phone number"
+            }), 400
+
+        # Demo mode: no SMS service required
+        return jsonify({
+            "success": True,
+            "message": "OTP sent successfully",
+            "demo_otp": DEMO_OTP
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"Error sending OTP: {str(e)}"
+        }), 500
+
+
+@app.route("/api/auth/verify-otp", methods=["POST"])
+def verify_otp():
+    try:
+        data = request.get_json() or {}
+
+        phone = str(data.get("phone", "")).strip()
+        otp = str(data.get("otp", "")).strip()
+        name = str(data.get("name", "")).strip()
+        bike_name = str(
+            data.get("bike_name", "Hero Splendor")
+        ).strip()
+
+        # Validate phone
+        if not phone.isdigit() or len(phone) != 10:
+            return jsonify({
+                "success": False,
+                "message": "Please enter a valid 10-digit phone number"
+            }), 400
+
+        # Validate OTP
+        if otp != DEMO_OTP:
+            return jsonify({
+                "success": False,
+                "message": "Invalid OTP. Please use the demo OTP."
+            }), 401
+
+        # Create new user or get existing user
+        user = database.get_or_create_user(
+            phone=phone,
+            name=name if name else None,
+            bike_name=bike_name or "Hero Splendor"
+        )
+
+        return jsonify({
+            "success": True,
+            "message": "Login successful",
+            "user": user
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"Error verifying OTP: {str(e)}"
+        }), 500
+
+
+@app.route("/api/auth/quick-login", methods=["POST"])
+def quick_login():
+    try:
+        data = request.get_json() or {}
+
+        phone = str(
+            data.get("phone", "9876543210")
+        ).strip()
+
+        name = str(
+            data.get("name", "Ved (Rider A)")
+        ).strip()
+
+        bike_name = str(
+            data.get("bike_name", "Hero Splendor")
+        ).strip()
+
+        # Create or retrieve demo user
+        user = database.get_or_create_user(
+            phone=phone,
+            name=name,
+            bike_name=bike_name
+        )
+
+        return jsonify({
+            "success": True,
+            "message": "Demo login successful",
+            "user": user
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"Error during demo login: {str(e)}"
+        }), 500
+
+
+# ============================================================================
+# GROUP RIDE / CONVOY API
+# ============================================================================
+
+@app.route("/api/group/demo-convoy", methods=["POST"])
+def demo_convoy():
+    try:
+        data = request.get_json() or {}
+
+        code = str(
+            data.get("code", "CONVOY-5")
+        ).strip().upper()
+
+        lat = float(data.get("lat", 19.0760))
+        lon = float(data.get("lon", 72.8777))
+
+        leader_name = str(
+            data.get("name", "Rider A (You)")
+        ).strip()
+
+        leader_phone = str(
+            data.get("phone", "9876543210")
+        ).strip()
+
+        leader_bike = str(
+            data.get("bike_name", "Hero Splendor")
+        ).strip()
+
+        ride, riders = database.create_demo_5_riders_convoy(
+            code=code,
+            center_lat=lat,
+            center_lon=lon,
+            leader_name=leader_name,
+            leader_phone=leader_phone,
+            leader_bike=leader_bike
+        )
+
+        return jsonify({
+            "success": True,
+            "code": code,
+            "ride": ride,
+            "riders": riders
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Failed to create demo convoy: {str(e)}"
+        }), 500
+
+
+@app.route("/api/group/<code>/status", methods=["GET"])
+def group_status(code):
+    try:
+        state = database.get_group_ride_state(code)
+
+        if not state:
+            return jsonify({
+                "success": False,
+                "error": "Group ride not found"
+            }), 404
+
+        riders = state["riders"]
+
+        # Find the first rider with critically low fuel.
+        low_fuel_rider = next(
+            (
+                rider for rider in riders
+                if float(rider.get("fuel", 0) or 0) <= 1.0
+                and rider.get("status") not in ["Refueling", "Stopped"]
+            ),
+            None
+        )
+
+        alert = None
+
+        if low_fuel_rider:
+            alert = (
+                f"{low_fuel_rider.get('rider_label', 'Rider')} "
+                f"has low fuel ({float(low_fuel_rider.get('fuel', 0)):.2f}L). "
+                f"Nearest fuel station recommended."
+            )
+
+        return jsonify({
+            "success": True,
+            "code": code.strip().upper(),
+            "ride": state["ride"],
+            "riders": riders,
+            "alert": alert
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Failed to fetch convoy status: {str(e)}"
+        }), 500
+
+
+@app.route("/api/group/<code>/update", methods=["POST"])
+def update_group_rider(code):
+    try:
+        data = request.get_json() or {}
+
+        rider_id = str(
+            data.get("rider_id", "")
+        ).strip()
+
+        if not rider_id:
+            return jsonify({
+                "success": False,
+                "error": "rider_id is required"
+            }), 400
+
+        state = database.get_group_ride_state(code)
+
+        if not state:
+            return jsonify({
+                "success": False,
+                "error": "Group ride not found"
+            }), 404
+
+        # Make sure this rider actually belongs to this convoy.
+        rider_exists = any(
+            str(rider.get("rider_id")) == rider_id
+            for rider in state["riders"]
+        )
+
+        if not rider_exists:
+            return jsonify({
+                "success": False,
+                "error": "Rider is not a member of this group"
+            }), 404
+
+        updated = database.update_rider_telemetry(
+            code=code,
+            rider_id=rider_id,
+            lat=data.get("lat"),
+            lon=data.get("lon"),
+            fuel=data.get("fuel"),
+            speed=data.get("speed"),
+            status=data.get("status"),
+            fuel_range=data.get("fuel_range"),
+            mileage=data.get("mileage")
+        )
+
+        if not updated:
+            return jsonify({
+                "success": False,
+                "error": "Unable to update rider telemetry"
+            }), 400
+
+        return jsonify({
+            "success": True,
+            "rider": updated
+        })
+
+    except (TypeError, ValueError) as e:
+        return jsonify({
+            "success": False,
+            "error": f"Invalid telemetry value: {str(e)}"
+        }), 400
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Failed to update telemetry: {str(e)}"
+        }), 500
+
+
+@app.route("/api/group/<code>/simulate-step", methods=["POST"])
+def simulate_group_step(code):
+    try:
+        state = database.get_group_ride_state(code)
+
+        if not state:
+            return jsonify({
+                "success": False,
+                "error": "Group ride not found"
+            }), 404
+
+        riders = state["riders"]
+
+        for index, rider in enumerate(riders):
+            rider_id = str(rider.get("rider_id"))
+
+            try:
+                current_lat = float(rider.get("lat") or 19.0760)
+                current_lon = float(rider.get("lon") or 72.8777)
+                current_fuel = float(rider.get("fuel") or 0)
+                current_speed = float(rider.get("speed") or 0)
+                current_range = float(rider.get("fuel_range") or 0)
+                mileage = float(rider.get("mileage") or 50)
+
+                # Small movement so the convoy visibly moves on the map.
+                movement_lat = 0.00035 + (index * 0.00003)
+                movement_lon = 0.00025 + (index * 0.00002)
+
+                new_lat = current_lat + movement_lat
+                new_lon = current_lon + movement_lon
+
+                # Simulate small fuel consumption.
+                fuel_consumption = 0.015 + (current_speed / 10000)
+
+                new_fuel = max(
+                    0.0,
+                    current_fuel - fuel_consumption
+                )
+
+                # Recalculate approximate remaining range.
+                new_range = max(
+                    0.0,
+                    new_fuel * mileage
+                )
+
+                if new_fuel <= 1.0:
+                    new_status = "Low Fuel Warning"
+                elif rider.get("status") == "Refueling":
+                    new_status = "Refueling"
+                else:
+                    new_status = "Cruising"
+
+                database.update_rider_telemetry(
+                    code=code,
+                    rider_id=rider_id,
+                    lat=new_lat,
+                    lon=new_lon,
+                    fuel=new_fuel,
+                    speed=current_speed,
+                    status=new_status,
+                    fuel_range=new_range,
+                    mileage=mileage
+                )
+
+            except (TypeError, ValueError):
+                # Ignore malformed individual rider data and continue
+                # simulating the remaining riders.
+                continue
+
+        updated_state = database.get_group_ride_state(code)
+
+        return jsonify({
+            "success": True,
+            "code": code.strip().upper(),
+            "riders": updated_state["riders"] if updated_state else []
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Simulation step failed: {str(e)}"
+        }), 500
+
+
+@app.route("/api/group/create", methods=["POST"])
+def create_group():
+    try:
+        data = request.get_json() or {}
+
+        name = str(
+            data.get("name", "Weekend Highway Ride")
+        ).strip()
+
+        code = str(
+            data.get("code", "")
+        ).strip().upper()
+
+        phone = str(
+            data.get("phone", "9876543210")
+        ).strip()
+
+        rider_name = str(
+            data.get("rider_name", "Leader")
+        ).strip()
+
+        bike_name = str(
+            data.get("bike_name", "Hero Splendor")
+        ).strip()
+
+        lat = float(data.get("lat", 19.0760))
+        lon = float(data.get("lon", 72.8777))
+
+        if not name:
+            name = "Weekend Highway Ride"
+
+        if not code:
+            return jsonify({
+                "success": False,
+                "error": "Please enter a group ride code"
+            }), 400
+
+        ride = database.create_group_ride(
+            code=code,
+            name=name,
+            created_by=phone
+        )
+
+        if not ride:
+            return jsonify({
+                "success": False,
+                "error": "This group ride code already exists"
+            }), 409
+
+        rider, join_error = database.join_group_ride(
+            code=code,
+            rider_id=phone,
+            rider_name=rider_name,
+            bike_name=bike_name,
+            lat=lat,
+            lon=lon,
+            fuel=2.5,
+            speed=50.0,
+            fuel_range=120.0,
+            mileage=database.get_bike_base_mileage(bike_name)
+            if hasattr(database, "get_bike_base_mileage")
+            else 50.0,
+            status="Cruising"
+        )
+
+        if join_error:
+            return jsonify({
+                "success": False,
+                "error": join_error
+            }), 400
+
+        return jsonify({
+            "success": True,
+            "code": code,
+            "ride": ride,
+            "rider": rider
+        })
+
+    except ValueError as e:
+        return jsonify({
+            "success": False,
+            "error": f"Invalid location value: {str(e)}"
+        }), 400
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Failed to create group ride: {str(e)}"
+        }), 500
+
+
+@app.route("/api/group/join", methods=["POST"])
+def join_group():
+    try:
+        data = request.get_json() or {}
+
+        code = str(
+            data.get("code", "")
+        ).strip().upper()
+
+        rider_name = str(
+            data.get("rider_name", "Rider")
+        ).strip()
+
+        phone = str(
+            data.get("phone", "")
+        ).strip()
+
+        bike_name = str(
+            data.get("bike_name", "Hero Splendor")
+        ).strip()
+
+        lat = float(data.get("lat", 19.0760))
+        lon = float(data.get("lon", 72.8777))
+
+        if not code:
+            return jsonify({
+                "success": False,
+                "error": "Group ride code is required"
+            }), 400
+
+        if not phone:
+            return jsonify({
+                "success": False,
+                "error": "Rider phone/id is required"
+            }), 400
+
+        mileage = 50.0
+
+        if bike_name in DEFAULT_BIKE_MILEAGE:
+            mileage = DEFAULT_BIKE_MILEAGE[bike_name]
+
+        rider, join_error = database.join_group_ride(
+            code=code,
+            rider_id=phone,
+            rider_name=rider_name or "Rider",
+            bike_name=bike_name,
+            lat=lat,
+            lon=lon,
+            fuel=2.5,
+            speed=50.0,
+            fuel_range=120.0,
+            mileage=mileage,
+            status="Cruising"
+        )
+
+        if join_error:
+            return jsonify({
+                "success": False,
+                "error": join_error
+            }), 404
+
+        return jsonify({
+            "success": True,
+            "code": code,
+            "rider": rider
+        })
+
+    except ValueError as e:
+        return jsonify({
+            "success": False,
+            "error": f"Invalid location value: {str(e)}"
+        }), 400
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Failed to join group ride: {str(e)}"
+        }), 500
+
+
+@app.route("/api/fuel-stations", methods=["GET"])
+def get_fuel_stations():
+    try:
+        lat = float(request.args.get("lat", 19.0760))
+        lon = float(request.args.get("lon", 72.8777))
+
+        stations = [
+            {
+                "name": "Indian Oil",
+                "brand": "IndianOil",
+                "lat": lat + 0.0080,
+                "lon": lon + 0.0060,
+                "distance_km": 1.1
+            },
+            {
+                "name": "Bharat Petroleum",
+                "brand": "BPCL",
+                "lat": lat - 0.0060,
+                "lon": lon + 0.0090,
+                "distance_km": 1.3
+            },
+            {
+                "name": "Hindustan Petroleum",
+                "brand": "HP",
+                "lat": lat + 0.0110,
+                "lon": lon - 0.0070,
+                "distance_km": 1.6
+            },
+            {
+                "name": "Reliance Fuel Station",
+                "brand": "Reliance",
+                "lat": lat - 0.0100,
+                "lon": lon - 0.0050,
+                "distance_km": 1.8
+            },
+            {
+                "name": "Nayara Energy",
+                "brand": "Nayara",
+                "lat": lat + 0.0140,
+                "lon": lon + 0.0100,
+                "distance_km": 2.1
+            }
+        ]
+
+        end_lat = request.args.get("end_lat")
+        end_lon = request.args.get("end_lon")
+
+        return jsonify(stations)
+
+    except (TypeError, ValueError):
+        return jsonify({
+            "error": "Invalid latitude or longitude"
+        }), 400
+
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

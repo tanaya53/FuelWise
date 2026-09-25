@@ -10,8 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Leaflet CSS: Local with CDN fallback -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/leaflet.css') }}" onerror="this.onerror=null;this.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';">
     <!-- Custom Style Sheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
@@ -36,6 +36,9 @@
             <nav class="nav-menu">
                 <button class="nav-btn active" data-tab="tab-analyze">
                     <i class="fa-solid fa-route"></i> Analyze Ride
+                </button>
+                <button class="nav-btn" data-tab="tab-group" id="nav-tab-group">
+                    <i class="fa-solid fa-users-line"></i> Group Ride <span class="badge-pulse-tag">LIVE</span>
                 </button>
                 <button class="nav-btn" data-tab="tab-garage">
                     <i class="fa-solid fa-motorcycle"></i> My Garage
@@ -75,9 +78,12 @@
                     <button id="theme-toggle" class="theme-toggle-btn" title="Toggle Theme">
                         <i class="fa-solid fa-moon"></i>
                     </button>
-                    <div class="user-profile">
+                    <div class="user-profile interactive-profile" id="header-user-btn" title="Click to login with Phone or view profile">
                         <div class="avatar"><i class="fa-solid fa-user-astronaut"></i></div>
-                        <span>Rider Mode</span>
+                        <div class="profile-meta-text">
+                            <span id="header-user-name">Login with Phone</span>
+                            <small id="header-user-phone">Guest Rider</small>
+                        </div>
                     </div>
                 </div>
             </header>
@@ -87,6 +93,17 @@
 
                 <!-- 1. Analyze Ride Tab -->
                 <section id="tab-analyze" class="tab-content active">
+                    <!-- Quick Group Ride Alert / Discovery Banner -->
+                    <div class="quick-convoy-callout">
+                        <div class="callout-left">
+                            <span class="callout-badge"><i class="fa-solid fa-users"></i> GROUP RIDE READY</span>
+                            <p>Convoy mode active: Track <strong>5 riders (Rider A to E)</strong> live on map with fuel & range telemetry!</p>
+                        </div>
+                        <button type="button" id="btn-quick-open-convoy" class="btn-primary btn-sm">
+                            <i class="fa-solid fa-bolt"></i> View 5-Rider Convoy
+                        </button>
+                    </div>
+
                     <div class="grid-2-col">
                         <!-- Left pane: Input Forms -->
                         <div class="glass-card form-section-card">
@@ -96,7 +113,8 @@
                                     <label><i class="fa-solid fa-map-marker-alt"></i> Route Details</label>
                                     <div class="location-inputs">
                                         <div class="input-with-action">
-                                            <input type="text" id="start-location" placeholder="Start Point Name / Coordinates" required>
+                                            <input type="text" id="start-location" placeholder="Start Point Name / GPS Coordinates" required>
+                                            <button type="button" id="btn-gps-current" class="btn-pin btn-gps" title="Auto-detect current GPS location"><i class="fa-solid fa-location-crosshairs"></i> GPS</button>
                                             <button type="button" id="btn-pin-start" class="btn-pin" title="Pin start point on map"><i class="fa-solid fa-map-pin"></i> Pin</button>
                                         </div>
                                         <div class="input-with-action">
@@ -105,7 +123,7 @@
                                         </div>
                                     </div>
                                     <div class="map-coordinates-debug">
-                                        <span id="coords-status" class="badge badge-info">Map pin helpers ready</span>
+                                        <span id="coords-status" class="badge badge-info"><i class="fa-solid fa-satellite"></i> GPS ready</span>
                                     </div>
                                 </div>
 
@@ -114,7 +132,10 @@
                                         <label for="bike-select"><i class="fa-solid fa-motorcycle"></i> Choose Bike</label>
                                         <select id="bike-select" required>
                                             <option value="">Select bike...</option>
-                                            <!-- Dynamically populated -->
+                                            <option value="Hero Splendor" selected>Hero Splendor (60.0 km/L)</option>
+                                            <option value="Honda Shine">Honda Shine (55.0 km/L)</option>
+                                            <option value="Bajaj Pulsar 150">Bajaj Pulsar 150 (45.0 km/L)</option>
+                                            <option value="TVS Apache">TVS Apache (40.0 km/L)</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
@@ -154,6 +175,11 @@
                                     <input type="range" id="speed-input" min="10" max="150" step="5" value="50" class="range-slider">
                                 </div>
 
+                                <label class="optimizer-toggle" for="optimize-speed-input">
+                                    <input type="checkbox" id="optimize-speed-input" checked>
+                                    <span><i class="fa-solid fa-leaf"></i> Let AI recommend the most fuel-efficient speed</span>
+                                </label>
+
                                 <button type="submit" id="btn-submit-analyze" class="btn-primary btn-block">
                                     <span class="normal-text"><i class="fa-solid fa-brain"></i> Compute Smart Range</span>
                                     <span class="loading-text"><i class="fa-solid fa-circle-notch fa-spin"></i> Running Random Forest AI...</span>
@@ -170,6 +196,17 @@
                                     <span class="instruction-badge">Click map to drop Start/End pins</span>
                                 </div>
                                 <div id="route-map" class="map-container"></div>
+                                <div id="route-legend" class="route-legend-row">
+                                    <span class="legend-item"><span class="legend-line direct"></span> Direct Route</span>
+                                    <span class="legend-item"><span class="legend-line leg1"></span> Leg 1: Current &rarr; Fuel Station</span>
+                                    <span class="legend-item"><span class="legend-line leg2"></span> Leg 2: Station &rarr; Destination</span>
+                                </div>
+                                <div class="map-actions-row">
+                                    <button type="button" id="find-stations-btn" class="btn-secondary btn-sm">
+                                        <i class="fa-solid fa-gas-pump"></i> Find Nearby Fuel Stations
+                                    </button>
+                                </div>
+                                <div id="fuel-stations-list" class="station-list-box"></div>
                             </div>
 
                             <!-- Predictions Display (Initially hidden or showing placeholder) -->
@@ -224,11 +261,178 @@
                                     <p id="res-recommendation">AI is processing your parameters...</p>
                                 </div>
                             </div>
+
+                            <!-- Dedicated AI Emergency Reachable Fuel Station Guidance Card -->
+                            <div id="station-guidance-card" class="station-guidance-card hidden">
+                                <div class="guidance-header">
+                                    <div class="guidance-title">
+                                        <i class="fa-solid fa-triangle-exclamation"></i>
+                                        <span>AI Fuel Station & Cruising Speed Guidance</span>
+                                    </div>
+                                    <span class="status-badge badge-danger">Refuel Required</span>
+                                </div>
+                                
+                                <div class="best-station-hero">
+                                    <div class="station-hero-top">
+                                        <div>
+                                            <span class="badge badge-warning" style="margin-bottom:6px; display:inline-block;"><i class="fa-solid fa-trophy"></i> Best Reachable Fuel Station</span>
+                                            <h4 id="best-station-name" class="station-hero-name">Searching best station...</h4>
+                                        </div>
+                                        <span id="best-station-brand" class="station-brand-badge">Petrol</span>
+                                    </div>
+
+                                    <div class="guidance-metrics-grid">
+                                        <div class="guidance-metric-item">
+                                            <span class="g-metric-label"><i class="fa-solid fa-location-dot"></i> Station Dist.</span>
+                                            <div id="best-station-distance" class="g-metric-val">- km</div>
+                                        </div>
+                                        <div class="guidance-metric-item highlight-eco">
+                                            <span class="g-metric-label"><i class="fa-solid fa-leaf"></i> AI-Recommended Speed</span>
+                                            <div id="best-station-speed" class="g-metric-val eco">- km/h</div>
+                                        </div>
+                                        <div class="guidance-metric-item highlight-eco">
+                                            <span class="g-metric-label"><i class="fa-solid fa-gauge"></i> Pred. Mileage at Speed</span>
+                                            <div id="best-station-mileage" class="g-metric-val eco">- km/L</div>
+                                        </div>
+                                        <div class="guidance-metric-item">
+                                            <span class="g-metric-label"><i class="fa-solid fa-gas-pump"></i> Fuel to Station</span>
+                                            <div id="best-station-fuel-req" class="g-metric-val">- L</div>
+                                        </div>
+                                        <div class="guidance-metric-item highlight-fuel">
+                                            <span class="g-metric-label"><i class="fa-solid fa-droplet"></i> Est. Remaining Fuel</span>
+                                            <div id="best-station-remaining-fuel" class="g-metric-val cyan">- L</div>
+                                        </div>
+                                        <div class="guidance-metric-item">
+                                            <span class="g-metric-label"><i class="fa-solid fa-clock"></i> Travel Time to Station</span>
+                                            <div id="best-station-time" class="g-metric-val">- min</div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Multi-segment route breakdown: Current -> Station -> Destination -->
+                                    <div class="route-segments-box">
+                                        <div class="route-segments-title">
+                                            <i class="fa-solid fa-route"></i> Complete Route: Current Location &rarr; Fuel Station &rarr; Original Destination
+                                        </div>
+                                        <div class="segment-leg leg-1">
+                                            <span class="segment-leg-name"><i class="fa-solid fa-arrow-right"></i> Leg 1: Current &rarr; <span id="leg1-station-name">Fuel Station</span></span>
+                                            <span id="leg1-meta" class="segment-leg-meta">- km | - min</span>
+                                        </div>
+                                        <div class="segment-leg leg-2">
+                                            <span class="segment-leg-name"><i class="fa-solid fa-forward"></i> Leg 2: Fuel Station &rarr; Final Destination</span>
+                                            <span id="leg2-meta" class="segment-leg-meta">- km (Refuel & Continue)</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Alternative Reachable Stations in Area -->
+                                <div id="other-stations-box" class="other-stations-wrapper">
+                                    <h5><i class="fa-solid fa-list-check"></i> All Reachable Stations Found</h5>
+                                    <div id="reachable-chips-list" class="stations-chips-row">
+                                        <!-- Dynamically populated station chips -->
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
 
-                <!-- 2. My Garage Tab -->
+                <!-- 2. Group Ride (Convoy) Tab -->
+                <section id="tab-group" class="tab-content">
+                    <!-- Convoy Control Toolbar -->
+                    <div class="glass-card convoy-control-card">
+                        <div class="convoy-top-bar">
+                            <div class="convoy-meta">
+                                <div class="ride-code-badge">
+                                    <span class="code-label"><i class="fa-solid fa-satellite-dish"></i> RIDE CODE:</span>
+                                    <strong id="active-ride-code">CONVOY-5</strong>
+                                </div>
+                                <span id="convoy-status-pill" class="status-badge badge-active"><i class="fa-solid fa-circle-dot"></i> Convoy Synced</span>
+                                <span id="convoy-riders-count" class="badge badge-info"><i class="fa-solid fa-users"></i> 5 Riders Live</span>
+                            </div>
+                            <div class="convoy-actions">
+                                <button type="button" id="btn-launch-demo-convoy" class="btn-primary btn-sm">
+                                    <i class="fa-solid fa-bolt"></i> Launch 5-Rider Convoy (A to E)
+                                </button>
+                                <button type="button" id="btn-toggle-simulation" class="btn-secondary btn-sm" title="Toggle real-time ride simulation">
+                                    <i class="fa-solid fa-play" id="sim-icon"></i> <span id="sim-btn-text">Simulate Movement</span>
+                                </button>
+                                <button type="button" id="btn-fit-convoy-bounds" class="btn-secondary btn-sm" title="Fit all 5 riders in map view">
+                                    <i class="fa-solid fa-arrows-to-eye"></i> Focus Convoy
+                                </button>
+                                <button type="button" id="btn-custom-ride-modal" class="btn-secondary btn-sm">
+                                    <i class="fa-solid fa-user-plus"></i> Join / Create
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Real-time Low Fuel Alert Banner -->
+                        <div id="convoy-safety-alert" class="convoy-alert-banner hidden">
+                            <div class="alert-content">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                                <span id="convoy-alert-text">⚠️ Low Fuel Alert: Rider C (0.85L left) needs a refuel soon! Nearest station recommended.</span>
+                            </div>
+                            <button type="button" id="btn-convoy-find-station" class="btn-warning btn-xs">
+                                <i class="fa-solid fa-gas-pump"></i> Route Convoy to Nearest Pump
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid-2-col group-layout-grid">
+                        <!-- Left Pane: 5-Rider Live Telemetry Cards -->
+                        <div class="convoy-telemetry-column">
+                            <div class="section-title-row">
+                                <h3><i class="fa-solid fa-satellite"></i> Live Convoy Telemetry (5 Riders)</h3>
+                                <span class="sync-indicator"><span class="status-dot pulsing"></span> Live Sync (3s)</span>
+                            </div>
+
+                            <!-- 5 Rider Cards Container -->
+                            <div id="convoy-riders-list" class="convoy-cards-list">
+                                <!-- Populated dynamically by JS for Rider A, B, C, D, E -->
+                            </div>
+
+                            <!-- Rider A / Active User Live Control Deck -->
+                            <div class="glass-card rider-control-deck">
+                                <h4><i class="fa-solid fa-sliders"></i> My Live Telemetry Broadcast (Rider A / You)</h4>
+                                <p class="deck-subtitle">Adjust your live fuel & speed to broadcast updates to the entire convoy in real time.</p>
+                                <div class="deck-controls-row">
+                                    <div class="deck-control-item">
+                                        <label for="deck-fuel-slider"><i class="fa-solid fa-droplet"></i> My Fuel: <strong id="deck-fuel-val">2.5</strong> L</label>
+                                        <input type="range" id="deck-fuel-slider" min="0.2" max="15.0" step="0.1" value="2.5" class="range-slider">
+                                    </div>
+                                    <div class="deck-control-item">
+                                        <label for="deck-speed-slider"><i class="fa-solid fa-gauge-high"></i> My Speed: <strong id="deck-speed-val">52</strong> km/h</label>
+                                        <input type="range" id="deck-speed-slider" min="0" max="120" step="2" value="52" class="range-slider">
+                                    </div>
+                                </div>
+                                <div class="deck-actions">
+                                    <button type="button" id="btn-broadcast-telemetry" class="btn-primary btn-sm btn-block">
+                                        <i class="fa-solid fa-tower-broadcast"></i> Broadcast Live Telemetry to Group
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Pane: Group Convoy Live Map -->
+                        <div class="convoy-map-column">
+                            <div class="glass-card map-card">
+                                <div class="map-header">
+                                    <h3><i class="fa-solid fa-map-location-dot"></i> Live Convoy GIS Map</h3>
+                                    <span class="instruction-badge" id="convoy-map-tip">Tracking Riders A, B, C, D, E</span>
+                                </div>
+                                <div id="group-map" class="map-container convoy-map-container"></div>
+                                <div class="convoy-map-legend">
+                                    <span class="legend-item"><span class="legend-dot dot-rider-a"></span> Rider A (You)</span>
+                                    <span class="legend-item"><span class="legend-dot dot-rider-b"></span> Rider B</span>
+                                    <span class="legend-item"><span class="legend-dot dot-rider-c"></span> Rider C (Low Fuel)</span>
+                                    <span class="legend-item"><span class="legend-dot dot-rider-d"></span> Rider D</span>
+                                    <span class="legend-item"><span class="legend-dot dot-rider-e"></span> Rider E (Refueling)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. My Garage Tab -->
                 <section id="tab-garage" class="tab-content">
                     <div class="grid-2-col">
                         <!-- Left Pane: Add Bike -->
@@ -410,7 +614,10 @@
                     <div class="form-group">
                         <label for="modal-bike"><i class="fa-solid fa-motorcycle"></i> Vehicle</label>
                         <select id="modal-bike" required>
-                            <!-- Options will mirror general selector -->
+                            <option value="Hero Splendor">Hero Splendor</option>
+                            <option value="Honda Shine">Honda Shine</option>
+                            <option value="Bajaj Pulsar 150">Bajaj Pulsar 150</option>
+                            <option value="TVS Apache">TVS Apache</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -459,10 +666,131 @@
         </div>
     </div>
 
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Phone Login & Rider Authentication Modal -->
+    <div id="auth-modal" class="modal-overlay hidden">
+        <div class="glass-card modal-container auth-modal-box">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-mobile-screen"></i> Rider Phone Login</h3>
+                <button class="close-modal-btn" id="btn-close-auth-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="auth-modal-body">
+                <p class="auth-intro">Login with your mobile phone number to automatically sync your GPS location, garage vehicles, and join group convoys.</p>
+
+                <!-- Step 1: Phone input -->
+                <div id="auth-step-phone">
+                    <div class="form-group">
+                        <label for="auth-phone-input"><i class="fa-solid fa-phone"></i> Mobile Phone Number</label>
+                        <div class="phone-input-group">
+                            <span class="phone-prefix">+91</span>
+                            <input type="tel" id="auth-phone-input" placeholder="9876543210" maxlength="10" value="9876543210">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="auth-name-input"><i class="fa-solid fa-user"></i> Rider Name</label>
+                            <input type="text" id="auth-name-input" placeholder="e.g. Ved (Rider A)" value="Ved (Rider A)">
+                        </div>
+                        <div class="form-group">
+                            <label for="auth-bike-select"><i class="fa-solid fa-motorcycle"></i> Your Motorcycle</label>
+                            <select id="auth-bike-select">
+                                <option value="Hero Splendor" selected>Hero Splendor (60 km/L)</option>
+                                <option value="Honda Shine">Honda Shine (55 km/L)</option>
+                                <option value="Bajaj Pulsar 150">Bajaj Pulsar 150 (45 km/L)</option>
+                                <option value="TVS Apache">TVS Apache (40 km/L)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="button" id="btn-send-otp" class="btn-primary btn-block">
+                        <i class="fa-solid fa-paper-plane"></i> Send Verification Code
+                    </button>
+                    <div class="auth-divider"><span>OR</span></div>
+                    <button type="button" id="btn-quick-demo-login" class="btn-secondary btn-block">
+                        <i class="fa-solid fa-bolt"></i> Instant Demo Login (Rider A / 9876543210)
+                    </button>
+                </div>
+
+                <!-- Step 2: OTP verification -->
+                <div id="auth-step-otp" class="hidden">
+                    <div class="otp-notice-box">
+                        <span class="notice-text">Code sent to: <strong id="otp-target-phone">+91 9876543210</strong></span>
+                        <span class="demo-otp-badge">Demo Code: <strong id="demo-otp-val">7788</strong></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="auth-otp-input"><i class="fa-solid fa-key"></i> 4-Digit Verification Code</label>
+                        <input type="text" id="auth-otp-input" placeholder="Enter 4-digit code" maxlength="6" value="7788">
+                    </div>
+                    <button type="button" id="btn-verify-otp" class="btn-primary btn-block">
+                        <i class="fa-solid fa-circle-check"></i> Verify & Sign In
+                    </button>
+                    <button type="button" id="btn-back-phone" class="btn-link btn-block" style="margin-top:8px;">
+                        <i class="fa-solid fa-arrow-left"></i> Change Phone Number
+                    </button>
+                </div>
+
+                <!-- Logged in state inside modal -->
+                <div id="auth-step-logged" class="hidden">
+                    <div class="logged-card">
+                        <div class="avatar-lg"><i class="fa-solid fa-user-astronaut"></i></div>
+                        <h4 id="logged-user-name">Ved (Rider A)</h4>
+                        <p id="logged-user-phone">+91 9876543210</p>
+                        <span id="logged-user-bike" class="badge badge-info">Hero Splendor</span>
+                    </div>
+                    <button type="button" id="btn-logout" class="btn-danger btn-block" style="margin-top:16px;">
+                        <i class="fa-solid fa-right-from-bracket"></i> Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Ride Creation / Join Modal -->
+    <div id="custom-ride-modal" class="modal-overlay hidden">
+        <div class="glass-card modal-container">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-users"></i> Join or Create Group Convoy</h3>
+                <button class="close-modal-btn" id="btn-close-custom-ride-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <div class="tabs-subnav">
+                    <button type="button" class="subnav-btn active" id="subnav-create">Create Convoy</button>
+                    <button type="button" class="subnav-btn" id="subnav-join">Join via Code</button>
+                </div>
+
+                <div id="subnav-create-pane">
+                    <div class="form-group">
+                        <label for="create-ride-name"><i class="fa-solid fa-flag-checkered"></i> Convoy Name</label>
+                        <input type="text" id="create-ride-name" placeholder="e.g. Western Highway Ride" value="Weekend Highway Ride">
+                    </div>
+                    <div class="form-group">
+                        <label for="create-ride-code"><i class="fa-solid fa-ticket"></i> Custom Ride Code (Optional)</label>
+                        <input type="text" id="create-ride-code" placeholder="e.g. CONVOY-5 (leave blank to auto-generate)" maxlength="12">
+                    </div>
+                    <button type="button" id="btn-submit-create-group" class="btn-primary btn-block">
+                        <i class="fa-solid fa-plus-circle"></i> Create & Launch Convoy
+                    </button>
+                </div>
+
+                <div id="subnav-join-pane" class="hidden">
+                    <div class="form-group">
+                        <label for="join-ride-code"><i class="fa-solid fa-key"></i> Enter Group Ride Code</label>
+                        <input type="text" id="join-ride-code" placeholder="e.g. CONVOY-5 or RIDE-408" style="text-transform:uppercase;">
+                    </div>
+                    <div class="form-group">
+                        <label for="join-rider-name"><i class="fa-solid fa-user"></i> Your Display Name</label>
+                        <input type="text" id="join-rider-name" placeholder="e.g. Rider B (Karan)">
+                    </div>
+                    <button type="button" id="btn-submit-join-group" class="btn-primary btn-block">
+                        <i class="fa-solid fa-right-to-bracket"></i> Join Group Convoy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS: Local with CDN fallback -->
+    <script src="{{ url_for('static', filename='vendor/leaflet.js') }}" onerror="this.onerror=null;this.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';"></script>
+    <!-- Chart.js: Local with CDN fallback -->
+    <script src="{{ url_for('static', filename='vendor/chart.js') }}" onerror="this.onerror=null;this.src='https://cdn.jsdelivr.net/npm/chart.js';"></script>
     <!-- Custom JS module -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
